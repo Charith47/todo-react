@@ -1,45 +1,106 @@
+import { useState, useEffect } from 'react';
 import TodoListItem from './TodoListItem';
 
-function TodoList() {
-    // use a map :)
-    const toDoItems = [
-        {
-            id: '1',
-            title: 'Go to sleep at 11 pm',
-            isDone: false,
-        },
-        {
-            id: '2',
-            title: 'Do assignment 1',
-            isDone: false,
-        },
-        {
-            id: '3',
-            title: 'Brush up basics',
-            isDone: true,
-        },
-    ];
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-    const handleToggle = (id) => {
-        // flip state
-        console.log(id);
+import todoService from '../services/todo.service';
+
+function TodoList() {
+    const [isLoading, setLoadingStatus] = useState(true);
+    const [todoItems, setTodoItems] = useState([]);
+
+    useEffect(() => {
+        const fetchTodos = async () => {
+            try {
+                const todos = await todoService.getTodoList();
+                setTodoItems(todos);
+
+                setLoadingStatus(false);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        fetchTodos();
+    }, []);
+
+    const handleToggle = async (id) => {
+        const arr = [...todoItems];
+        const idx = arr.findIndex((item) => item.id === id);
+
+        try {
+            const task = arr[idx];
+            const item = await todoService.updateTask({ id: task.id, isDone: !task.isDone });
+
+            console.log(item)
+
+            arr[idx] = item;
+            setTodoItems(arr);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
-    const listItems = toDoItems.map((item) => {
+    const handleDelete = (e, id) => {
+        e.stopPropagation();
+        let arr = [...todoItems];
+        arr = arr.filter((item) => item.id !== id);
+        setTodoItems(arr);
+    };
+
+    const addTask = async () => {
+        const task = prompt('Add new task');
+
+        if (task) {
+            try {
+                const newTask = await todoService.addTask(task);
+                let arr = [...todoItems, newTask];
+
+                setTodoItems(arr);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    };
+
+    const listItems = todoItems.map((item) => {
         return (
             <TodoListItem
                 key={item.id}
                 id={item.id}
                 title={item.title}
                 isDone={item.isDone}
-                handleToggle={handleToggle}></TodoListItem>
+                handleToggle={handleToggle}
+                handleDelete={handleDelete}></TodoListItem>
         );
     });
 
     return (
-        <div className="max-w-xl mx-auto p-4 h-full">
+        <div className="max-w-xl mx-auto p-4 h-full relative">
             <h1 className="text-3xl text-info font-bold text-center">Todo list 📃</h1>
-            <div className="py-8 space-y-4">{listItems}</div>
+
+            {isLoading ? (
+                <div className="absolute left-1/2 top-1/2 -m-4">
+                    <span className="text-white text-lg">
+                        <FontAwesomeIcon
+                            className="animate-spin text-neutral"
+                            icon={faSpinner}
+                            size="2xl"></FontAwesomeIcon>
+                    </span>
+                </div>
+            ) : (
+                <div className="py-8 space-y-4">{listItems}</div>
+            )}
+
+            <div className="flex absolute bottom-10 right-4">
+                <button
+                    onClick={() => addTask()}
+                    aria-label="New task"
+                    type="button"
+                    className="mx-auto bg-info hover:bg-primary text-white p-4 rounded-full w-16 h-16 max-w-sm uppercase">
+                    <FontAwesomeIcon icon={faPlus} size="2xl" />
+                </button>
+            </div>
         </div>
     );
 }
