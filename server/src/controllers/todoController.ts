@@ -26,7 +26,24 @@ export const createTodo = async (req: Request, res: Response) => {
     }
 };
 
-export const updateTodo = async (req: Request, res: Response) => {};
+export const updateTodo = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { isDone } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ message: 'Todo item not found' });
+    }
+
+    try {
+        const todo = await Todo.findOneAndUpdate({ _id: id }, { isDone }, { new: true });
+
+        console.log(todo?.toJSON());
+
+        return res.status(200).json();
+    } catch (error) {
+        return res.sendStatus(500);
+    }
+};
 
 export const deleteTodo = async (req: Request, res: Response) => {
     const { id } = req.params;

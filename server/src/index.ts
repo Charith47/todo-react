@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 import mongoose from 'mongoose';
 import todoRoutes from './routes/todos';
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 const app: Express = express();
 
 app.use(helmet());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -23,7 +25,7 @@ app.get('/api/', (req, res) => {
 
 const mongoUrl = process.env.DB_URL;
 
-if (mongoUrl !== undefined) {
+if (mongoUrl) {
     mongoose
         .connect(mongoUrl)
         .then(() => {

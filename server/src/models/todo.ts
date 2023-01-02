@@ -8,7 +8,7 @@ const todoSchema = new Schema(
             type: String,
             required: true,
         },
-        isComplete: {
+        isDone: {
             type: Boolean,
             default: false,
         },
@@ -19,5 +19,11 @@ const todoSchema = new Schema(
     },
     { timestamps: true }
 );
+
+todoSchema.method('toJSON', function () {
+    const { __v, _id, ...object } = this.toObject();
+    object.id = _id;
+    return object;
+});
 
 export default mongoose.model('Todo', todoSchema);
